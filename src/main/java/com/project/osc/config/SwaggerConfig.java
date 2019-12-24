@@ -14,10 +14,10 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @Configuration
 public class SwaggerConfig {
 
-    private static final String TITLE = "OSCs Employee REST API";
+    private static final String TITLE = "OSC REST API";
     private static final Contact CONTACT = new Contact("Fundraising", null,
             "julian.markowskyj@gmail.com.ar");
-    private static final String DESCRIPTION = "Servicio que retorna OSCs donde trabajo el empleado";
+    private static final String DESCRIPTION = "Servicio para Organizaciones Sociales y Civiles";
     private static final String SERVICE_VERSION = "0.0.1";
 
     ApiInfo apiInfo() {

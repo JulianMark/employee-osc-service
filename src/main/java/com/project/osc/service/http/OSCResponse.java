@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 public class OSCResponse {
 
-    @ApiModelProperty(notes="Lista de OSCs donde trabajo el empleado")
+    @ApiModelProperty(notes="Lista de OSC donde trabajo el empleado")
     private List<OSC> oscList;
     @ApiModelProperty(notes="Mensaje de error, en caso de que falle el WS")
     private String errorMessage;
