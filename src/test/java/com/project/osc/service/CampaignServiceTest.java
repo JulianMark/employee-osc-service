@@ -1,9 +1,11 @@
 package com.project.osc.service;
 
+import com.project.osc.mapper.CampaignMapper;
 import com.project.osc.mapper.OSCMapper;
+import com.project.osc.model.Campaign;
 import com.project.osc.model.OSC;
+import com.project.osc.service.http.CampaignResponse;
 import com.project.osc.service.http.OSCResponse;
-import org.h2.command.dml.MergeUsing;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,23 +19,22 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@DisplayName("Employee OSC Service")
-class OSCServiceTest {
+@DisplayName("Employee Campaign Service")
+class CampaignServiceTest {
 
     private static final Integer idEmployee = 1;
-    private static final OSC VALID_OSC_A_LIST_1= new OSC(1,"AFULIC");
-    private static final OSC VALID_OSC_A_LIST_2 = new OSC(1,"SOLES");
+    private static final Campaign VALID_CAMPAIGN_A_LIST_1= new Campaign(1,"RIO CUARTO",1,"AFULIC");
+    private static final Campaign VALID_CAMPAIGN_A_LIST_2 = new Campaign(2,"VILLA ALLENDE",1,"SOLES");
 
 
     @Mock
-    private OSCMapper oscMapper;
+    private CampaignMapper campaignMapper;
 
     @InjectMocks
     private OSCService sut;
@@ -44,69 +45,69 @@ class OSCServiceTest {
     }
 
     @Nested
-    @DisplayName("Obtain OSC list from employee")
-    class ObtainOSC {
+    @DisplayName("Obtain campaign list from employee")
+    class ObtainCampaign {
 
         @Nested
         @DisplayName("Should return 400 (Bad Request)")
-        class ObtainOSCBadRequestTest {
+        class ObtainCampaignBadRequestTest {
 
             @Test
             @DisplayName("When param idEmployee is null")
-            public void obtainOSCList_idEmployeeIsNull_ReturnsBadRequest(){
-                ResponseEntity<OSCResponse> responseEntity = sut.obtainOSCList(null);
+            public void obtainCampaignList_idEmployeeIsNull_ReturnsBadRequest(){
+                ResponseEntity<CampaignResponse> responseEntity = sut.obtainCampaignList(null);
                 assertThat("Status Code Response", responseEntity.getStatusCode(),is(HttpStatus.BAD_REQUEST));
             }
 
             @Test
             @DisplayName("When param idEmployee is zero")
-            public void obtainOSCList_idEmployeeIsZero_ReturnsBadRequest(){
-                ResponseEntity<OSCResponse> responseEntity = sut.obtainOSCList(0);
+            public void obtainCampaignList_idEmployeeIsZero_ReturnsBadRequest(){
+                ResponseEntity<CampaignResponse> responseEntity = sut.obtainCampaignList(0);
                 assertThat("Status Code Response", responseEntity.getStatusCode(),is(HttpStatus.BAD_REQUEST));
             }
 
             @Test
             @DisplayName("When param idEmployee is minor zero")
-            public void obtainOSCList_idEmployeeIsMinorZero_ReturnBadRequest(){
-                ResponseEntity<OSCResponse> responseEntity = sut.obtainOSCList(-1);
+            public void obtainCampaignList_idEmployeeIsMinorZero_ReturnBadRequest(){
+                ResponseEntity<CampaignResponse> responseEntity = sut.obtainCampaignList(-1);
                 assertThat("Status Code Response", responseEntity.getStatusCode(),is(HttpStatus.BAD_REQUEST));
             }
         }
         @Nested
         @DisplayName("Should return 500 (Internal Server Error)")
-        class ObtainOSCInternalServerError {
+        class ObtainCampaignInternalServerError {
 
             @Test
-            @DisplayName("When OSCMapper throws Exception")
-            public void obtainOSCList_OSCMapperThrowException_ReturnInternalServerError(){
-                when(oscMapper.obtainOSCList(any())).thenThrow(new RuntimeException("something bad happen"));
-                ResponseEntity<OSCResponse> responseEntity = sut.obtainOSCList(idEmployee);
+            @DisplayName("When CampaignMapper throws Exception")
+            public void obtainCampaignList_CampaignMapperThrowException_ReturnInternalServerError(){
+                when(campaignMapper.obtainCampaignList(any())).thenThrow(new RuntimeException("something bad happen"));
+                ResponseEntity<CampaignResponse> responseEntity = sut.obtainCampaignList(idEmployee);
                 assertThat("Status Code Response", responseEntity.getStatusCode(),is(HttpStatus.INTERNAL_SERVER_ERROR));
             }
         }
 
         @Nested
         @SuiteDisplayName("Should return 204 (No Content)")
-        class ObtainOSCNoContentTest {
+        class ObtainCampaignNoContentTest {
 
             @Test
-            @DisplayName("When OSCList throws Exception")
-            public void obtainOSCList_OSCListIsEmpty_ReturnNoContent(){
-                when(oscMapper.obtainOSCList(any())).thenReturn(new ArrayList<OSC>());
-                ResponseEntity<OSCResponse> responseEntity = sut.obtainOSCList(idEmployee);
+            @DisplayName("When CampaignList throws Exception")
+            public void obtainCampaignList_CampaignListIsEmpty_ReturnNoContent(){
+                when(campaignMapper.obtainCampaignList(any())).thenReturn(new ArrayList<Campaign>());
+                ResponseEntity<CampaignResponse> responseEntity = sut.obtainCampaignList(idEmployee);
                 assertThat("Status Code Response", responseEntity.getStatusCode(),is(HttpStatus.NO_CONTENT));
             }
         }
 
         @Nested
         @SuiteDisplayName("Should return 200 (OK)")
-        class ObtainOSCStatusOKTest {
+        class ObtainCampaignStatusOKTest {
 
             @Test
-            @DisplayName("When No Exception is Catched")
-            public void obtainOSCList_NoExceptionCatched_ReturnsOk(){
-                when(oscMapper.obtainOSCList(any())).thenReturn(Arrays.asList(VALID_OSC_A_LIST_1,VALID_OSC_A_LIST_2));
-                ResponseEntity<OSCResponse> responseEntity = sut.obtainOSCList(idEmployee);
+            @DisplayName("When No Exception is Caught")
+            public void obtainCampaignList_NoExceptionCaught_ReturnsOk(){
+                when(campaignMapper.obtainCampaignList(any())).thenReturn(Arrays.asList(VALID_CAMPAIGN_A_LIST_1,VALID_CAMPAIGN_A_LIST_2));
+                ResponseEntity<CampaignResponse> responseEntity = sut.obtainCampaignList(idEmployee);
                 assertThat("Status Code Response", responseEntity.getStatusCode(),is(HttpStatus.OK));
             }
         }
