@@ -5,6 +5,7 @@ import com.project.osc.mapper.OSCMapper;
 import com.project.osc.model.Campaign;
 import com.project.osc.service.http.CampaignResponse;
 import com.project.osc.service.http.OSCResponse;
+import com.project.osc.utils.ListCampaignValidator;
 import com.project.osc.utils.ListOSCValidator;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -18,7 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.List;
 import java.util.Optional;
 
 import static com.project.osc.utils.Utils.validateIdNumber;
@@ -30,12 +30,16 @@ public class OSCService {
     private final OSCMapper oscMapper;
     private final CampaignMapper campaignMapper;
     private final ListOSCValidator listOSCValidator;
+    private final ListCampaignValidator listCampaignValidator;
+    private static final String INVALID_PARAMETER = "The parameters entered are invalid: ";
+    private static final String EXCEPTION_MESSAGE = "An error occurred while trying to get historical indicators for employee id {}";
 
     @Autowired
-    public OSCService(OSCMapper oscMapper, CampaignMapper campaignMapper, ListOSCValidator listOSCValidator) {
+    public OSCService(OSCMapper oscMapper, CampaignMapper campaignMapper, ListOSCValidator listOSCValidator, ListCampaignValidator listCampaignValidator) {
         this.oscMapper = oscMapper;
         this.campaignMapper = campaignMapper;
         this.listOSCValidator = listOSCValidator;
+        this.listCampaignValidator = listCampaignValidator;
     }
 
     @GetMapping(
@@ -55,10 +59,10 @@ public class OSCService {
                     .map(listOSCValidator.obtainListValidator())
                     .orElseThrow( ()-> new RuntimeException("Something bad happened"));
         }catch (IllegalArgumentException iae){
-            LOGGER.warn("The parameters entered are invalid: ",iae);
+            LOGGER.warn(INVALID_PARAMETER,iae);
             return ResponseEntity.badRequest().body(new OSCResponse(iae.getMessage()));
         }catch (Exception ex) {
-            LOGGER.error("An error occurred while trying to obtain the osc for the employee with id: "+idEmployee);
+            LOGGER.error(EXCEPTION_MESSAGE+idEmployee);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new OSCResponse(ex.getMessage()));
         }
     }
@@ -75,19 +79,15 @@ public class OSCService {
     public ResponseEntity<CampaignResponse> obtainCampaignList (@PathVariable Integer idEmployee) {
         try{
             validateIdNumber(idEmployee);
-            List<Campaign> campaignList = campaignMapper.obtainCampaignList(idEmployee);
-            if (campaignList.isEmpty()) {
-                LOGGER.info("No se obtuvieron campanias para el empleado "+idEmployee);
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(new CampaignResponse("Campanias no encontradas"));
-            }
-            LOGGER.info("Se obtuvieron las campanias para el empleado "+idEmployee);
-            return ResponseEntity.ok(new CampaignResponse(campaignList));
+            return Optional.of(campaignMapper.obtainCampaignList(idEmployee))
+                    .map(listCampaignValidator.obtainListValidator())
+                    .orElseThrow(()-> new RuntimeException("Something bad happened"));
 
         }catch (IllegalArgumentException iae){
-            LOGGER.warn("Los parametros ingresados son invalidos: ",iae);
+            LOGGER.warn(INVALID_PARAMETER,iae);
             return ResponseEntity.badRequest().body(new CampaignResponse(iae.getMessage()));
         }catch (Exception ex) {
-            LOGGER.error("Ocurrio un error al intentar obtener las campanias para el empleado con id: "+idEmployee);
+            LOGGER.error(EXCEPTION_MESSAGE+idEmployee);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new CampaignResponse(ex.getMessage()));
         }
     }

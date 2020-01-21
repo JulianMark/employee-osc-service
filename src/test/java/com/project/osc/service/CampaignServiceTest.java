@@ -6,6 +6,7 @@ import com.project.osc.model.Campaign;
 import com.project.osc.model.OSC;
 import com.project.osc.service.http.CampaignResponse;
 import com.project.osc.service.http.OSCResponse;
+import com.project.osc.utils.ListCampaignValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -32,9 +34,11 @@ class CampaignServiceTest {
     private static final Campaign VALID_CAMPAIGN_A_LIST_1= new Campaign(1,"RIO CUARTO",1,"AFULIC");
     private static final Campaign VALID_CAMPAIGN_A_LIST_2 = new Campaign(2,"VILLA ALLENDE",1,"SOLES");
 
-
     @Mock
     private CampaignMapper campaignMapper;
+
+    @Mock
+    private ListCampaignValidator listCampaignValidator;
 
     @InjectMocks
     private OSCService sut;
@@ -68,7 +72,7 @@ class CampaignServiceTest {
 
             @Test
             @DisplayName("When param idEmployee is minor zero")
-            public void obtainCampaignList_idEmployeeIsMinorZero_ReturnBadRequest(){
+            public void obtainCampaignList_idEmployeeIsMinorZero_ReturnsBadRequest(){
                 ResponseEntity<CampaignResponse> responseEntity = sut.obtainCampaignList(-1);
                 assertThat("Status Code Response", responseEntity.getStatusCode(),is(HttpStatus.BAD_REQUEST));
             }
@@ -79,7 +83,7 @@ class CampaignServiceTest {
 
             @Test
             @DisplayName("When CampaignMapper throws Exception")
-            public void obtainCampaignList_CampaignMapperThrowException_ReturnInternalServerError(){
+            public void obtainCampaignList_CampaignMapperThrowException_ReturnsInternalServerError(){
                 when(campaignMapper.obtainCampaignList(any())).thenThrow(new RuntimeException("something bad happen"));
                 ResponseEntity<CampaignResponse> responseEntity = sut.obtainCampaignList(idEmployee);
                 assertThat("Status Code Response", responseEntity.getStatusCode(),is(HttpStatus.INTERNAL_SERVER_ERROR));
@@ -92,8 +96,11 @@ class CampaignServiceTest {
 
             @Test
             @DisplayName("When CampaignList throws Exception")
-            public void obtainCampaignList_CampaignListIsEmpty_ReturnNoContent(){
-                when(campaignMapper.obtainCampaignList(any())).thenReturn(new ArrayList<Campaign>());
+            public void obtainCampaignList_CampaignListIsEmpty_ReturnsNoContent(){
+                ArrayList<Campaign> emptyList = new ArrayList<>();
+                when(campaignMapper.obtainCampaignList(any())).thenReturn(emptyList);
+                when(listCampaignValidator.obtainListValidator())
+                        .thenReturn(campaigns -> ResponseEntity.noContent().build());
                 ResponseEntity<CampaignResponse> responseEntity = sut.obtainCampaignList(idEmployee);
                 assertThat("Status Code Response", responseEntity.getStatusCode(),is(HttpStatus.NO_CONTENT));
             }
@@ -106,9 +113,15 @@ class CampaignServiceTest {
             @Test
             @DisplayName("When No Exception is Caught")
             public void obtainCampaignList_NoExceptionCaught_ReturnsOk(){
-                when(campaignMapper.obtainCampaignList(any())).thenReturn(Arrays.asList(VALID_CAMPAIGN_A_LIST_1,VALID_CAMPAIGN_A_LIST_2));
+                List<Campaign> campaignList = Arrays.asList(VALID_CAMPAIGN_A_LIST_1, VALID_CAMPAIGN_A_LIST_2);
+                when(campaignMapper.obtainCampaignList(any()))
+                        .thenReturn(campaignList);
+                when(listCampaignValidator.obtainListValidator())
+                        .thenReturn(campaigns -> ResponseEntity.ok(new CampaignResponse(campaignList)));
                 ResponseEntity<CampaignResponse> responseEntity = sut.obtainCampaignList(idEmployee);
                 assertThat("Status Code Response", responseEntity.getStatusCode(),is(HttpStatus.OK));
+                assertThat(responseEntity.getBody().getCampaignList().get(0).toString(),
+                        is(campaignList.get(0).toString()));
             }
         }
 

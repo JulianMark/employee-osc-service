@@ -49,7 +49,7 @@ class OSCServiceTest {
     class ObtainOSC {
 
         @Nested
-        @DisplayName("Should return 400 (Bad Request)")
+        @DisplayName("Should returns 400 (Bad Request)")
         class ObtainOSCBadRequestTest {
 
             @Test
@@ -68,7 +68,7 @@ class OSCServiceTest {
 
             @Test
             @DisplayName("When param idEmployee is minor zero")
-            public void obtainOSCList_idEmployeeIsMinorZero_ReturnBadRequest(){
+            public void obtainOSCList_idEmployeeIsMinorZero_ReturnsBadRequest(){
                 ResponseEntity<OSCResponse> responseEntity = sut.obtainOSCList(-1);
                 assertThat("Status Code Response", responseEntity.getStatusCode(),is(HttpStatus.BAD_REQUEST));
             }
@@ -79,7 +79,7 @@ class OSCServiceTest {
 
             @Test
             @DisplayName("When OSCMapper throws Exception")
-            public void obtainOSCList_OSCMapperThrowException_ReturnInternalServerError(){
+            public void obtainOSCList_OSCMapperThrowException_ReturnsInternalServerError(){
                 when(oscMapper.obtainOSCList(any())).thenThrow(new RuntimeException("something bad happen"));
                 ResponseEntity<OSCResponse> responseEntity = sut.obtainOSCList(idEmployee);
                 assertThat("Status Code Response", responseEntity.getStatusCode(),is(HttpStatus.INTERNAL_SERVER_ERROR));
@@ -87,12 +87,12 @@ class OSCServiceTest {
         }
 
         @Nested
-        @SuiteDisplayName("Should return 204 (No Content)")
+        @SuiteDisplayName("Should returns 204 (No Content)")
         class ObtainOSCNoContentTest {
 
             @Test
             @DisplayName("When OSCList throws Exception")
-            public void obtainOSCList_OSCListIsEmpty_ReturnNoContent(){
+            public void obtainOSCList_OSCListIsEmpty_ReturnsNoContent(){
                 List<OSC> emptyList = Arrays.asList();
                 when(oscMapper.obtainOSCList(any())).thenReturn(emptyList);
                 when(listOSCValidator.obtainListValidator()).thenReturn( oscList -> ResponseEntity.noContent().build());
@@ -102,7 +102,7 @@ class OSCServiceTest {
         }
 
         @Nested
-        @SuiteDisplayName("Should return 200 (OK)")
+        @SuiteDisplayName("Should returns 200 (OK)")
         class ObtainOSCStatusOKTest {
 
             @Test
