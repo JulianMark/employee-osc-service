@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.project.osc.mapper.CampaignMapper">
+
+    <select id="obtainCampaignList" resultType="com.project.osc.model.Campaign">
+		SELECT DISTINCT C.ID, C.NAME,  C.ID_TYPE_CAMPAIGN campaignType, O.DESCRIPTION
+		FROM CAMPAIGNS C
+		JOIN OSC O ON O.ID = C.ID_OSC
+		JOIN TEAM_EMPLOYEES TE ON TE.ID_CAMPAIGN = C.ID
+		WHERE TE.ID_EMPLOYEE = #{idEmployee}
+	</select>
+
+</mapper>
