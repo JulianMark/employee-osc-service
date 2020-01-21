@@ -3,9 +3,9 @@ package com.project.osc.service;
 import com.project.osc.mapper.CampaignMapper;
 import com.project.osc.mapper.OSCMapper;
 import com.project.osc.model.Campaign;
-import com.project.osc.model.OSC;
 import com.project.osc.service.http.CampaignResponse;
 import com.project.osc.service.http.OSCResponse;
+import com.project.osc.utils.ListOSCValidator;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
+import java.util.Optional;
+
+import static com.project.osc.utils.Utils.validateIdNumber;
 
 @RestController
 public class OSCService {
@@ -26,11 +29,13 @@ public class OSCService {
     private static final Logger LOGGER = LoggerFactory.getLogger(OSCService.class);
     private final OSCMapper oscMapper;
     private final CampaignMapper campaignMapper;
+    private final ListOSCValidator listOSCValidator;
 
     @Autowired
-    public OSCService(OSCMapper oscMapper, CampaignMapper campaignMapper) {
+    public OSCService(OSCMapper oscMapper, CampaignMapper campaignMapper, ListOSCValidator listOSCValidator) {
         this.oscMapper = oscMapper;
         this.campaignMapper = campaignMapper;
+        this.listOSCValidator = listOSCValidator;
     }
 
     @GetMapping(
@@ -45,20 +50,15 @@ public class OSCService {
     })
     public ResponseEntity<OSCResponse> obtainOSCList(@PathVariable Integer idEmployee) {
         try{
-            validateIdEmployee(idEmployee);
-            List<OSC> oscList = oscMapper.obtainOSCList(idEmployee);
-            if (oscList.isEmpty()) {
-                LOGGER.info("No se obtuvieron OSC para el empleado "+idEmployee);
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(new OSCResponse("OSCs no encontradas"));
-            }
-            LOGGER.info("Se obtuvieron las oscs para el empleado "+idEmployee);
-            return ResponseEntity.ok(new OSCResponse(oscList));
-
+            validateIdNumber(idEmployee);
+            return Optional.ofNullable(oscMapper.obtainOSCList(idEmployee))
+                    .map(listOSCValidator.obtainListValidator())
+                    .orElseThrow( ()-> new RuntimeException("Something bad happened"));
         }catch (IllegalArgumentException iae){
-            LOGGER.warn("Los parametros ingresados son invalidos: ",iae);
+            LOGGER.warn("The parameters entered are invalid: ",iae);
             return ResponseEntity.badRequest().body(new OSCResponse(iae.getMessage()));
         }catch (Exception ex) {
-            LOGGER.error("Ocurrio un error al intentar obtener las OSC para el empleado con id: "+idEmployee);
+            LOGGER.error("An error occurred while trying to obtain the osc for the employee with id: "+idEmployee);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new OSCResponse(ex.getMessage()));
         }
     }
@@ -74,7 +74,7 @@ public class OSCService {
     })
     public ResponseEntity<CampaignResponse> obtainCampaignList (@PathVariable Integer idEmployee) {
         try{
-            validateIdEmployee(idEmployee);
+            validateIdNumber(idEmployee);
             List<Campaign> campaignList = campaignMapper.obtainCampaignList(idEmployee);
             if (campaignList.isEmpty()) {
                 LOGGER.info("No se obtuvieron campanias para el empleado "+idEmployee);
@@ -89,15 +89,6 @@ public class OSCService {
         }catch (Exception ex) {
             LOGGER.error("Ocurrio un error al intentar obtener las campanias para el empleado con id: "+idEmployee);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new CampaignResponse(ex.getMessage()));
-        }
-    }
-
-    private void validateIdEmployee (Integer idEmployee){
-        if (idEmployee == null){
-            throw new IllegalArgumentException("El id del empleado no puede ser nulo");
-        }
-        if (idEmployee <= 0){
-            throw new IllegalArgumentException("El id del empleado no puede ser menor o igual a 0");
         }
     }
 }
