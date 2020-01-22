@@ -20,7 +20,7 @@ public class ListOSCValidator {
         return this::obtainList;
     }
 
-    private ResponseEntity<OSCResponse> obtainList(List<OSC> oscList) {
+    public ResponseEntity<OSCResponse> obtainList(List<OSC> oscList) {
         if (!oscList.isEmpty()) {
             LOGGER.info("the list of osc for the employee was obtained");
             return ResponseEntity.ok(new OSCResponse(oscList));

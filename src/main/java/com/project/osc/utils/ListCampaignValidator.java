@@ -21,7 +21,7 @@ public class ListCampaignValidator {
         return this::obtainList;
     }
 
-    private ResponseEntity<CampaignResponse> obtainList(List<Campaign> listCampaigns) {
+    public ResponseEntity<CampaignResponse> obtainList(List<Campaign> listCampaigns) {
         if (!listCampaigns.isEmpty()) {
             LOGGER.info("the list for campiagn for the employee was obtained");
             return ResponseEntity.ok().body(new CampaignResponse(listCampaigns));
