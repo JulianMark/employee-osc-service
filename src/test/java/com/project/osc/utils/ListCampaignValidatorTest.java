@@ -1,9 +1,7 @@
 package com.project.osc.utils;
 
 import com.project.osc.model.Campaign;
-import com.project.osc.model.OSC;
 import com.project.osc.service.http.CampaignResponse;
-import com.project.osc.service.http.OSCResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,18 +32,18 @@ class ListCampaignValidatorTest {
     }
 
     @Test
-    @DisplayName("When list is empty should returns 204")
+    @DisplayName("When list is empty. Should return 204 (No Content")
     void obtainEmptyList_ListIsEmpty_ReturnsNonContent () {
         List<Campaign> emptyList = Arrays.asList();
-        ResponseEntity<CampaignResponse> responseEntity = sut.obtainList(emptyList);
+        ResponseEntity<CampaignResponse> responseEntity = sut.apply(emptyList);
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.NO_CONTENT));
     }
 
     @Test
-    @DisplayName("When list is not empty should returns 200")
+    @DisplayName("When list is not empty. Should return 200 (OK)")
     void obtainList_ListIsNotEmpty_ReturnsOk () {
         List<Campaign> campaignList = Arrays.asList(campaign);
-        ResponseEntity<CampaignResponse> responseEntity = sut.obtainList(campaignList);
+        ResponseEntity<CampaignResponse> responseEntity = sut.apply(campaignList);
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.OK));
         assertThat(responseEntity.getBody().getCampaignList().get(0).toString(),
                 is(campaignList.get(0).toString()));

@@ -11,16 +11,12 @@ import java.util.List;
 import java.util.function.Function;
 
 @Component
-public class ListOSCValidator {
+public class ListOSCValidator implements Function<List<OSC>, ResponseEntity<OSCResponse>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ListOSCValidator.class);
 
-
-    public Function<List<OSC>, ResponseEntity<OSCResponse>> obtainListValidator() {
-        return this::obtainList;
-    }
-
-    public ResponseEntity<OSCResponse> obtainList(List<OSC> oscList) {
+    @Override
+    public ResponseEntity<OSCResponse> apply(List<OSC> oscList) {
         if (!oscList.isEmpty()) {
             LOGGER.info("the list of osc for the employee was obtained");
             return ResponseEntity.ok(new OSCResponse(oscList));

@@ -3,6 +3,7 @@ package com.project.osc.service;
 import com.project.osc.mapper.CampaignMapper;
 import com.project.osc.mapper.OSCMapper;
 import com.project.osc.model.Campaign;
+import com.project.osc.model.OSC;
 import com.project.osc.service.http.CampaignResponse;
 import com.project.osc.service.http.OSCResponse;
 import com.project.osc.utils.ListCampaignValidator;
@@ -19,7 +20,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static com.project.osc.utils.Utils.validateIdNumber;
 
@@ -27,15 +31,15 @@ import static com.project.osc.utils.Utils.validateIdNumber;
 public class OSCService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OSCService.class);
+    private static final String INVALID_PARAMETER = "The parameters entered are invalid: ";
     private final OSCMapper oscMapper;
     private final CampaignMapper campaignMapper;
-    private final ListOSCValidator listOSCValidator;
-    private final ListCampaignValidator listCampaignValidator;
-    private static final String INVALID_PARAMETER = "The parameters entered are invalid: ";
-    private static final String EXCEPTION_MESSAGE = "An error occurred while trying to get historical indicators for employee id {}";
+    private final Function<List<OSC>, ResponseEntity<OSCResponse>> listOSCValidator;
+    private final Function<List<Campaign>, ResponseEntity<CampaignResponse>> listCampaignValidator;
 
     @Autowired
-    public OSCService(OSCMapper oscMapper, CampaignMapper campaignMapper, ListOSCValidator listOSCValidator, ListCampaignValidator listCampaignValidator) {
+    public OSCService(OSCMapper oscMapper, CampaignMapper campaignMapper, ListOSCValidator listOSCValidator
+                        ,ListCampaignValidator listCampaignValidator) {
         this.oscMapper = oscMapper;
         this.campaignMapper = campaignMapper;
         this.listOSCValidator = listOSCValidator;
@@ -56,16 +60,17 @@ public class OSCService {
         try{
             validateIdNumber(idEmployee);
             return Optional.ofNullable(oscMapper.obtainOSCList(idEmployee))
-                    .map(listOSCValidator.obtainListValidator())
+                    .map(listOSCValidator)
                     .orElseThrow( ()-> new RuntimeException("Something bad happened"));
         }catch (IllegalArgumentException iae){
             LOGGER.warn(INVALID_PARAMETER,iae);
             return ResponseEntity.badRequest().body(new OSCResponse(iae.getMessage()));
         }catch (Exception ex) {
-            LOGGER.error(EXCEPTION_MESSAGE+idEmployee);
+            LOGGER.error("An error occurred while trying to get OSC for employee id {}"+idEmployee);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new OSCResponse(ex.getMessage()));
         }
     }
+
     @GetMapping(
             value = "employee/indicators/campaign/{idEmployee}",
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -80,14 +85,13 @@ public class OSCService {
         try{
             validateIdNumber(idEmployee);
             return Optional.of(campaignMapper.obtainCampaignList(idEmployee))
-                    .map(listCampaignValidator.obtainListValidator())
+                    .map(listCampaignValidator)
                     .orElseThrow(()-> new RuntimeException("Something bad happened"));
-
         }catch (IllegalArgumentException iae){
             LOGGER.warn(INVALID_PARAMETER,iae);
             return ResponseEntity.badRequest().body(new CampaignResponse(iae.getMessage()));
         }catch (Exception ex) {
-            LOGGER.error(EXCEPTION_MESSAGE+idEmployee);
+            LOGGER.error("An error occurred while trying to get campaign for employee id {}"+idEmployee);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new CampaignResponse(ex.getMessage()));
         }
     }

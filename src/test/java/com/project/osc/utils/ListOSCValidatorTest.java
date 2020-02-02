@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -33,18 +32,18 @@ class ListOSCValidatorTest {
     }
 
     @Test
-    @DisplayName("When list is empty should returns 204")
+    @DisplayName("When list is empty. Should return 204 (No Content)")
     void obtainEmptyList_ListIsEmpty_ReturnsNonContent () {
         List<OSC> emptyList = Arrays.asList();
-        ResponseEntity<OSCResponse> responseEntity = sut.obtainList(emptyList);
+        ResponseEntity<OSCResponse> responseEntity = sut.apply(emptyList);
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.NO_CONTENT));
     }
 
     @Test
-    @DisplayName("When list is not empty should returns 200")
+    @DisplayName("When list is not empty. Should return 200 (OK)")
     void obtainList_ListIsNotEmpty_ReturnsOk () {
         List<OSC> oscList = Arrays.asList(osc);
-        ResponseEntity<OSCResponse> responseEntity = sut.obtainList(oscList);
+        ResponseEntity<OSCResponse> responseEntity = sut.apply(oscList);
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.OK));
         assertThat(responseEntity.getBody().getOscList().get(0).toString(),
                 is(oscList.get(0).toString()));
