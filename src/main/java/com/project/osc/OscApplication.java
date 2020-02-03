@@ -9,5 +9,4 @@ public class OscApplication {
     public static void main(String[] args) {
         SpringApplication.run(OscApplication.class, args);
     }
-
 }

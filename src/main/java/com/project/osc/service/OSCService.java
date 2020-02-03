@@ -3,8 +3,10 @@ package com.project.osc.service;
 import com.project.osc.mapper.CampaignMapper;
 import com.project.osc.mapper.OSCMapper;
 import com.project.osc.model.Campaign;
+import com.project.osc.model.OSC;
 import com.project.osc.service.http.CampaignResponse;
 import com.project.osc.service.http.OSCResponse;
+import com.project.osc.utils.ListCampaignValidator;
 import com.project.osc.utils.ListOSCValidator;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -18,8 +20,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static com.project.osc.utils.Utils.validateIdNumber;
 
@@ -27,15 +31,19 @@ import static com.project.osc.utils.Utils.validateIdNumber;
 public class OSCService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OSCService.class);
+    private static final String INVALID_PARAMETER = "The parameters entered are invalid: ";
     private final OSCMapper oscMapper;
     private final CampaignMapper campaignMapper;
-    private final ListOSCValidator listOSCValidator;
+    private final Function<List<OSC>, ResponseEntity<OSCResponse>> listOSCValidator;
+    private final Function<List<Campaign>, ResponseEntity<CampaignResponse>> listCampaignValidator;
 
     @Autowired
-    public OSCService(OSCMapper oscMapper, CampaignMapper campaignMapper, ListOSCValidator listOSCValidator) {
+    public OSCService(OSCMapper oscMapper, CampaignMapper campaignMapper, ListOSCValidator listOSCValidator
+                        ,ListCampaignValidator listCampaignValidator) {
         this.oscMapper = oscMapper;
         this.campaignMapper = campaignMapper;
         this.listOSCValidator = listOSCValidator;
+        this.listCampaignValidator = listCampaignValidator;
     }
 
     @GetMapping(
@@ -52,16 +60,17 @@ public class OSCService {
         try{
             validateIdNumber(idEmployee);
             return Optional.ofNullable(oscMapper.obtainOSCList(idEmployee))
-                    .map(listOSCValidator.obtainListValidator())
+                    .map(listOSCValidator)
                     .orElseThrow( ()-> new RuntimeException("Something bad happened"));
         }catch (IllegalArgumentException iae){
-            LOGGER.warn("The parameters entered are invalid: ",iae);
+            LOGGER.warn(INVALID_PARAMETER,iae);
             return ResponseEntity.badRequest().body(new OSCResponse(iae.getMessage()));
         }catch (Exception ex) {
-            LOGGER.error("An error occurred while trying to obtain the osc for the employee with id: "+idEmployee);
+            LOGGER.error("An error occurred while trying to get OSC for employee id {}"+idEmployee);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new OSCResponse(ex.getMessage()));
         }
     }
+
     @GetMapping(
             value = "employee/indicators/campaign/{idEmployee}",
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -75,19 +84,14 @@ public class OSCService {
     public ResponseEntity<CampaignResponse> obtainCampaignList (@PathVariable Integer idEmployee) {
         try{
             validateIdNumber(idEmployee);
-            List<Campaign> campaignList = campaignMapper.obtainCampaignList(idEmployee);
-            if (campaignList.isEmpty()) {
-                LOGGER.info("No se obtuvieron campanias para el empleado "+idEmployee);
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(new CampaignResponse("Campanias no encontradas"));
-            }
-            LOGGER.info("Se obtuvieron las campanias para el empleado "+idEmployee);
-            return ResponseEntity.ok(new CampaignResponse(campaignList));
-
+            return Optional.of(campaignMapper.obtainCampaignList(idEmployee))
+                    .map(listCampaignValidator)
+                    .orElseThrow(()-> new RuntimeException("Something bad happened"));
         }catch (IllegalArgumentException iae){
-            LOGGER.warn("Los parametros ingresados son invalidos: ",iae);
+            LOGGER.warn(INVALID_PARAMETER,iae);
             return ResponseEntity.badRequest().body(new CampaignResponse(iae.getMessage()));
         }catch (Exception ex) {
-            LOGGER.error("Ocurrio un error al intentar obtener las campanias para el empleado con id: "+idEmployee);
+            LOGGER.error("An error occurred while trying to get campaign for employee id {}"+idEmployee);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new CampaignResponse(ex.getMessage()));
         }
     }
